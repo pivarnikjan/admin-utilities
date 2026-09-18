@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local tool settings (contain machine-specific paths)
+.claude/settings.local.json
+
+# Personal data: never commit scans, documents or outputs these tools process.
+# Tests generate their own images in a temp directory, so none are needed here.
+*.heic
+*.HEIC
+*.heif
+*.hif
+*.jpg
+*.jpeg
+*.JPG
+*.png
+*.pdf
+*.tif
+*.tiff
+*.csv
+*.docx
+*.xlsx
+Scans*/
+Zmluvy/
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/

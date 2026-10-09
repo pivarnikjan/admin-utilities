@@ -25,6 +25,7 @@ venv/
 *.xlsx
 Scans*/
 Zmluvy/
+Uctovnictvo 2026/
 
 # OS / editor
 Thumbs.db

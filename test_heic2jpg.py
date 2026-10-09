@@ -360,11 +360,42 @@ class ConfirmTests(unittest.TestCase):
                     self.assertIs(confirm("really?"), expected)
 
 
+class SingleFileTests(TempTreeTestCase):
+    def test_converts_only_the_named_file(self) -> None:
+        paths = self.build_tree()
+        sibling = write_image(self.root / "IMG_0009.heic")
+
+        code, out = run_cli(str(paths["top"]))
+
+        self.assertEqual(code, 0, out)
+        self.assertTrue(paths["top"].with_suffix(".jpg").is_file())
+        self.assertFalse(sibling.with_suffix(".jpg").exists())
+        self.assertEqual(len(self.jpg_files()), 2)  # the new one + already.jpg
+        self.assertEqual(len(self.heic_files()), 5)
+
+    def test_output_dir_and_delete(self) -> None:
+        paths = self.build_tree()
+        out_dir = self.root / "out"
+
+        code, out = run_cli(str(paths["upper"]), "-o", str(out_dir), "-d", "-y")
+
+        self.assertEqual(code, 0, out)
+        self.assertTrue((out_dir / "IMG_0002.jpg").is_file())
+        self.assertFalse(paths["upper"].exists())
+        self.assertEqual(len(self.heic_files()), 3)
+
+
 class CliValidationTests(TempTreeTestCase):
     def test_missing_directory(self) -> None:
         code, out = run_cli(str(self.root / "does-not-exist"))
         self.assertEqual(code, 1)
         self.assertIn("Not a directory", out)
+
+    def test_non_heic_file_is_rejected(self) -> None:
+        other = write_image(self.root / "photo.jpg")
+        code, out = run_cli(str(other))
+        self.assertEqual(code, 1)
+        self.assertIn("Not a directory or HEIC file", out)
 
     def test_invalid_quality(self) -> None:
         self.build_tree()

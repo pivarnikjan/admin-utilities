@@ -26,6 +26,10 @@ Dependencies:
 - `pillow_heif` — required by `heic2jpg.py`, optional for `img2pdf.py`
   (without it, `img2pdf.py` simply ignores `.heic`/`.heif` files).
 
+`pillow_heif` is pinned on purpose: Windows Smart App Control blocks the unsigned
+native module of some releases (1.5.0 and 1.7.0 fail with "An Application Control
+policy has blocked this file"; 1.6.0 and 1.8.0 load). Re-test before changing the pin.
+
 On Windows the examples below assume the virtual environment is active. Otherwise
 call the interpreter directly, e.g. `.venv\Scripts\python.exe img2pdf.py ...`.
 
@@ -40,11 +44,14 @@ python heic2jpg.py DIRECTORY [options]
 Converts every `.heic`/`.heif`/`.hif` file found in `DIRECTORY`. The EXIF rotation
 is baked into the pixels, so the JPEG looks correct in every viewer.
 
+`DIRECTORY` may also be a single HEIC/HEIF file; only that file is converted, and
+the JPEG lands next to it (or directly in the `-o` folder).
+
 ### Options
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `DIRECTORY` | – | Folder containing the HEIC files (required). |
+| `DIRECTORY` | – | Folder containing the HEIC files, or a single HEIC file (required). |
 | `-o`, `--output DIR` | next to the originals | Output folder; the source subfolder structure is mirrored inside it. Cannot be combined with `-i`. |
 | `-i`, `--import`, `--in-place` | off | Write each JPEG next to its HEIC, keeping the folder structure. This is also the default when neither `-i` nor `-o` is given — but it must be stated explicitly before `-d` is allowed. |
 | `-q`, `--quality N` | `85` | JPEG quality, 1–95. |
@@ -61,6 +68,10 @@ is baked into the pixels, so the JPEG looks correct in every viewer.
 
 ```bash
 python heic2jpg.py Scans -o Scans-jpg
+```
+
+```bash
+python heic2jpg.py Scans\IMG_5912.HEIC
 ```
 
 ```bash
@@ -296,8 +307,8 @@ earlier run can silently stay outdated (use `--overwrite` to force a rebuild).
 python -m unittest -v
 ```
 
-33 tests build throwaway folder trees in a temp directory and drive the real CLI —
-recursive discovery, in-place output, the confirmation prompt, `--dry-run`, deletion
+36 tests build throwaway folder trees in a temp directory and drive the real CLI —
+recursive discovery, single-file input, in-place output, the confirmation prompt, `--dry-run`, deletion
 safety (a corrupt file keeps its original), and a genuine HEIC round trip. Nothing
 outside the temp directory is touched.
 

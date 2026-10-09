@@ -6,6 +6,7 @@ Requires:  pip install pillow pillow-heif
 
 Examples:
     python heic2jpg.py ~/Pictures
+    python heic2jpg.py ~/Pictures/IMG_0001.HEIC           # just one file
     python heic2jpg.py ~/Pictures -o ~/Pictures/jpg -q 80 -r
     python heic2jpg.py ./uctovnictvo-2026 -r -i -d      # whole tree, drop originals
 """
@@ -196,7 +197,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Convert HEIC/HEIF files in a directory to compressed JPEGs."
     )
-    parser.add_argument("directory", type=Path, help="Directory containing HEIC files")
+    parser.add_argument("directory", type=Path,
+                        help="Directory containing HEIC files, or a single HEIC file")
     destination = parser.add_mutually_exclusive_group()
     destination.add_argument("-o", "--output", type=Path,
                              help="Output directory (default: alongside the originals)")
@@ -230,8 +232,11 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     root: Path = args.directory.expanduser().resolve()
-    if not root.is_dir():
-        return print(f"Not a directory: {root}") or 1
+    single: Path | None = None
+    if root.is_file() and root.suffix.lower() in HEIC_SUFFIXES:
+        single, root = root, root.parent
+    elif not root.is_dir():
+        return print(f"Not a directory or HEIC file: {root}") or 1
 
     if not 1 <= args.quality <= 95:
         return print("Quality must be between 1 and 95.") or 1
@@ -241,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
                      "add -i (convert in place) or -o DIR.") or 1
 
     out_dir = args.output.expanduser().resolve() if args.output else root
-    files = find_heic_files(root, args.recursive)
+    files = [single] if single else find_heic_files(root, args.recursive)
 
     if not files:
         print(f"No HEIC/HEIF files found in {root}")
@@ -249,8 +254,8 @@ def main(argv: list[str] | None = None) -> int:
 
     scope = "tree" if args.recursive else "folder"
     prefix = "Dry run: " if args.dry_run else ""
-    print(f"{prefix}Found {len(files)} file(s) in this {scope}. "
-          f"Converting at quality {args.quality}...\n")
+    found = "1 file" if single else f"Found {len(files)} file(s) in this {scope}"
+    print(f"{prefix}{found}. Converting at quality {args.quality}...\n")
 
     results: list[Result] = []
     failures = skipped = 0
